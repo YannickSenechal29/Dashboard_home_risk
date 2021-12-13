@@ -148,8 +148,8 @@ if client_data:
 ## Display loan answer regarding model probability calcul (path through API Flask to get the result / checbox condition : 'Résultat de la demande de prêt') ##
 if client_pred_score:
     st.write('### Décision sur la demande de prêt')
-    ### careful the url of the API should be change for serial deployment!! ###
-    url_api_model_result = 'http://127.0.0.1:5000/scores'
+    ###Heroku url of the API application!! ###
+    url_api_model_result = 'https://api-home-risk-oc-7.herokuapp.com/scores'
     ### Be careful to the params, with must have a dict with index / ID loan value. It is how it is implemented in our API ###
     get_request = requests.get(url=url_api_model_result, params={'index': selected_credit})
     ### We get  the prediction information from the json format of the API model ###
