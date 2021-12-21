@@ -83,8 +83,9 @@ def bin_location(bins, value):
     # set the index counter
     count = 0
     # playing for loop in bins list
+    value_bin_ind = count
     for b in bins:
-        if value >= b:
+        if value > b:
             value_bin_ind = count
         count+=1
     return value_bin_ind
@@ -120,6 +121,10 @@ st.write('Dimension des données: ' + str(df_test_sample_origin.shape[0]) + ' li
 selections = st.multiselect('Vous pouvez ajouter ou enlever une donnée présente dans cette liste:', df_test_sample_origin.columns.tolist(),
  df_test_sample_origin.columns.tolist()[0:10])
 st.dataframe(df_test_sample_origin.loc[:,selections])
+### add expander for further explanations on the data ###
+with st.expander('Informations complémentaires'):
+    st.write(""" Ici vous trouvez les informations disponibles pour tous les clients.  \n"""
+            """ Pour plus d'informations sur les features (variables) disponibles merci de contacter l'équipe support. """)
 
 ## Display selected client data (checkbox condition: 'Données client') ##
 if client_data:
@@ -144,11 +149,15 @@ if client_data:
         col2.pyplot(fig_client_info, clear_figure=True)
     else:
         col2.write("Vous avez sélectionné trop de feature!!! Le graphique n'est pas affiché")
+    ### add expander for further explanations on the selected client data ###
+    with st.expander('Informations complémentaires'):
+        st.write(""" Ici vous trouvez les informations client disponibles pour la demande de prêt sélectionnée.  \n"""
+            """ La graphique en bâton donne les valeurs de features (variables) normalisées pour pouvoir les afficher sur la même échelle. """)
 
 ## Display loan answer regarding model probability calcul (path through API Flask to get the result / checbox condition : 'Résultat de la demande de prêt') ##
 if client_pred_score:
     st.write('### Décision sur la demande de prêt')
-    ###Heroku url of the API application!! ###
+    ### careful the url of the API should be change for serial deployment!! ###
     url_api_model_result = 'https://api-home-risk-oc-7.herokuapp.com/scores'
     ### Be careful to the params, with must have a dict with index / ID loan value. It is how it is implemented in our API ###
     get_request = requests.get(url=url_api_model_result, params={'index': selected_credit})
@@ -163,7 +172,7 @@ if client_pred_score:
         st.write('Demande de prêt acceptée!')
     else:
         #### add condition in function of the value of the prediction, if over the treshold but near should be discussed ####
-        if prediction_value > treshold and prediction_value <= 0.55:
+        if prediction_value > treshold and prediction_value <= 0.52:
             st.write('Demande de prêt refusée --> à discuter avec le conseiller')
         else:
             st.write('Demande de prêt refusée!')
@@ -179,10 +188,19 @@ if client_pred_score:
              'steps' : [
                  {'range': [0, 30], 'color': "darkgreen"},
                  {'range': [30, (treshold*100)], 'color': "lightgreen"},
-                 {'range': [(treshold*100),55], 'color': "orange"},
-                 {'range': [55, 100], 'color':"red"}],
+                 {'range': [(treshold*100),52], 'color': "orange"},
+                 {'range': [52, 100], 'color':"red"}],
              'threshold' : {'line': {'color': "red", 'width': 4}, 'thickness': 0.75, 'value': treshold*100}}))
     st.plotly_chart(fig_gauge)
+    ### add expander for further explanations on the prediction résult ###
+    with st.expander('Informations complémentaires'):
+        st.write(""" Le retour de l'API de prédiction donne un score entre 0 et 100% qui représente la probabilité de refus de prêt.  \n"""
+            """ Trois cas de figure sont alors possibles:  \n """
+            """ 1) Le score est en dessous de 49% → la demande de prêt est acceptée.  \n """
+            """ 2) Le score est entre 49 et 52% → la demande de prêt est refusée 
+            mais peut être discutée avec le conseiller pour éventuellement l'accepter 
+            (grâce notamment aux onglets 'interprétations du score' et 'analyse des features clients').  \n"""
+            """3) Le score est au dessus de 52% → la demande de prêt est refusée. """)
 
 ## Display interpretation about the score, global and local features importances (using SHAP library and SHAP model / checkbox: 'Interprétation du score' ) ##
 if score_interpret:
@@ -199,9 +217,13 @@ if score_interpret:
         shap.summary_plot(shap_values[1], df_test_sample[features], feature_names=features, 
         show=False, plot_size=None)
         st.pyplot(figure_shap_glob_v, clear_figure=True)
-        #### add expander for futher explanations on the graphic ####
+        ##### add expander for futher explanations on the graphic #####
         with st.expander('Informations complémentaires'):
-            st.write(""" Explication sur le graphique violon avec high and low values """)
+            st.write(""" Dans ce graphique en violon, on affiche par ordre d'importance les 20 features 
+            qui ont le plus d'influence globale dans la valeur du score avec leur distribution.  \n""" 
+            """A gauche du traie elles vont dans le sens de réduire le score (d'accepter un prêt),
+             en revanche à droite elles vont dans le sens d'augmenter le score (de refuser un prêt).  \n """ 
+             """ Le code couleur indique la valeur de la feature. Une valeur élevée en rouge et une valeur faible en bleu. """)
     elif selected_global_shap == 'Graphique_en_baton':
         figure_shap_glob_b = plt.figure(figsize=(10,10))
         shap.summary_plot(shap_values[1], df_test_sample[features], feature_names=features, 
@@ -209,7 +231,9 @@ if score_interpret:
         st.pyplot(figure_shap_glob_b, clear_figure=True)
         #### add expander for futher explanations on the graphic ####
         with st.expander('Informations complémentaires'):
-            st.write(""" Explication sur le graphique en baton """)
+            st.write(""" Dans ce graphique en bâton, on affiche par ordre d'importance les 20 features qui ont
+            le plus d'influence globale dans la valeur du score.  \n """
+            """ L'influence allant dans le sens de refuser une demande de prêt. """)
     ### Waterfall plot for local features importance ###
     st.write('#### *Importance local des features*')
     st.write('Graphique en cascade')
@@ -227,7 +251,11 @@ if score_interpret:
     st.pyplot(figure_loc_wtf, clear_figure=True)
     #### add expander for further explanations on the graphic ####
     with st.expander('Informations complémentaires'):
-            st.write(""" Explication sur le graphique en cascade """)
+            st.write(""" Dans ce graphique en cascade, on affiche par ordre d'importance les features 
+            qui ont le plus d'influence dans la valeur du score à l'échelle de la demande client que l'on regarde (locale).  \n"""
+            """ Le code couleur indique dans quel sens elles influes. En bleu dans le sens de réduire le score (d'accepter le prêt),
+             en rouge dans le sens d'augmenter le score (de refuser le prêt).""" 
+            )
 
 ## Display comparison with all the client and the near client in score (using function created to filter near clients / checkbox: 'Analyse des features clients' ) ##
 if client_analysis:
@@ -247,12 +275,12 @@ if client_analysis:
     #### all client scatter filtered with PREDICT_PROB column and treshold (accepted / denied) ####
     figure_biv.add_trace(go.Scatter(x=df_test_sample.loc[df_test_sample['TARGET_PROB'] < treshold][feat1], 
     y=df_test_sample.loc[df_test_sample['TARGET_PROB'] < treshold][feat2], 
-    mode='markers', name='clients_prêt_acceptés', marker_symbol='circle', 
+    mode='markers', name='Tous les clients_prêt_acceptés', marker_symbol='circle', 
     marker={'color': df_test_sample.loc[df_test_sample['TARGET_PROB'] < treshold]['TARGET_PROB'], 
                             'coloraxis':'coloraxis'}))
     figure_biv.add_trace(go.Scatter(x=df_test_sample.loc[df_test_sample['TARGET_PROB'] >= treshold][feat1], 
     y=df_test_sample.loc[df_test_sample['TARGET_PROB'] >= treshold][feat2], 
-    mode='markers', name='clients_prêt_refusés', marker_symbol='x', 
+    mode='markers', name='Tous les clients_prêt_refusés', marker_symbol='x', 
     marker={'color': df_test_sample.loc[df_test_sample['TARGET_PROB'] >= treshold]['TARGET_PROB'], 
                             'coloraxis':'coloraxis'}))
     #### neat customer scatter filtered with PREDICT_PROB column and treshold (accepted / denied) ####
@@ -276,6 +304,12 @@ if client_analysis:
                     xaxis={'title':feat1}, yaxis={'title':feat2}, coloraxis={'colorbar':{'title':'Score'}, 
                                                                                 'colorscale':'RdYlGn_r', 'cmin':0, 'cmax':1, 'showscale':True})
     st.plotly_chart(figure_biv, use_container_width=True)
+    #### add expander for further explanations on the scatterplot ####
+    with st.expander('Informations complémentaires'):
+            st.write(""" Ce graphique permet d'afficher un nuage de points en fonction de deux features sélectionnables.  \n"""
+            """ Notez qu'il est possible de cliquer dans la légende pour ne sélectionner que le groupe de clients qui nous intéressent pour comparer
+             au client que l'on regarde.  \n """
+             """ Le code couleur indique la valeur du score client. """ )
     ### Univariate analysis choose type of plot (boxplot or histogram/bargraph) ###
     st.write('#### *Analyse univariée*')
     #### select between boxplot or histogram/barplot distributions for univariate analysis ####
@@ -286,7 +320,7 @@ if client_analysis:
         df_test_sample[features].columns.tolist()[0:5])
         ##### display boxplot #####
         ###### create in each df a columns to identifie them and use hue parameters ######
-        df_test_sample['data_origin'] = 'clients'
+        df_test_sample['data_origin'] = 'Tous les clients'
         df_nearest_client['data_origin'] = 'clients_similaires'
         ###### concatenate two df before drawing boxplot ######
         cdf = pd.concat([df_test_sample[selections_analysis + ['data_origin']], 
@@ -309,6 +343,10 @@ if client_analysis:
         leg.legendHandles[-1].set_linewidth(1.5)
         leg.legendHandles[-1].set_edgecolor('black')
         st.pyplot(figure_boxplot, clear_figure=True)
+        ###### add expander for further explanations on the scatterplot ######
+        with st.expander('Informations complémentaires'):
+            st.write(""" Ce boxplot permet d'afficher les distributions des groupes de clients en fonction de la valeur du client sélectionné.  \n"""
+            """ Notez que les variables sont normalisées afin d'avoir une image de la situation de notre client par rapport aux autres groupes de clients.""")
     if selected_anaysis_gh == 'Histogramme/bâton':
         ##### Add the posibility to choose the distribution we want to see #####
         feat3 = st.selectbox('Feature', features,0)
@@ -333,4 +371,10 @@ if client_analysis:
         plt.ylabel('Nombre Total')
         plt.yticks(fontsize=8)
         st.pyplot(figure_h, clear_figure=True)
+        ###### add expander for further explanations on the scatterplot ######
+        with st.expander('Informations complémentaires'):
+            st.write(""" Cette histogramme permet d'afficher les distributions des groupes de clients.  \n"""
+            """ Notez que la barre en jaune indique dans quel population de nos groupes de clients 
+            se trouve notre client sélectionné.  \n """
+            """ Les variables sont également normalisées. """)
     
