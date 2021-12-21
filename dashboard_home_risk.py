@@ -120,7 +120,7 @@ st.write('### Informations générales clients (index = ID de la demande de prê
 st.write('Dimension des données: ' + str(df_test_sample_origin.shape[0]) + ' lignes ' + str(df_test_sample_origin.shape[1]) + ' colonnes')
 selections = st.multiselect('Vous pouvez ajouter ou enlever une donnée présente dans cette liste:', df_test_sample_origin.columns.tolist(),
  df_test_sample_origin.columns.tolist()[0:10])
-st.dataframe(df_test_sample_origin.loc[:,selections])
+st.dataframe(df_test_sample_origin.loc[:,selections].sort_index())
 ### add expander for further explanations on the data ###
 with st.expander('Informations complémentaires'):
     st.write(""" Ici vous trouvez les informations disponibles pour tous les clients.  \n"""
