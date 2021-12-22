@@ -167,7 +167,7 @@ if client_pred_score:
     answer_value = bool(get_request.json()['Answer'])
     ### Display results ###
     st.write(f'Demande de prêt ID: {selected_credit}')
-    st.write(f'Probabilité de défauts de remboursement: {prediction_value*100:.2f} %')
+    st.write(f'Probabilité de défaut de remboursement: {prediction_value*100:.2f} %')
     if answer_value:
         st.write('Demande de prêt acceptée!')
     else:
@@ -208,7 +208,7 @@ if score_interpret:
     ### calcul shap values with the explainer ###
     shap_values =shap_explainer.shap_values(df_test_sample[features])
     ### select between violin or bar plot for global features importance ###
-    st.write('#### *Importance global des features*')
+    st.write('#### *Importance globale des features*')
     selected_global_shap = st.selectbox("Sélectionner un graphique",
     ['Graphique_en_violon', 'Graphique_en_baton'])
     #### plot graphic in function of the selectbox ####
@@ -235,7 +235,7 @@ if score_interpret:
             le plus d'influence globale dans la valeur du score.  \n """
             """ L'influence allant dans le sens de refuser une demande de prêt. """)
     ### Waterfall plot for local features importance ###
-    st.write('#### *Importance local des features*')
+    st.write('#### *Importance locale des features*')
     st.write('Graphique en cascade')
     #### define client raw with index of the ID and get specific shap values for it ####
     index_client0 = df_test_sample.index.get_loc(selected_credit)
@@ -300,9 +300,10 @@ if client_analysis:
     marker={'size':20, 'color':[df_test_sample.loc[selected_credit, 'TARGET_PROB']], 'coloraxis':'coloraxis', 
     'line':{'width':3, 'color':'black'}}))
     #### update legend localisation and add colorbar ####
-    figure_biv.update_layout(legend={'orientation':"h", 'yanchor':'bottom','y':1.05, 'xanchor':'right','x':1, 'bgcolor':'DarkSlateGrey'},
-                    xaxis={'title':feat1}, yaxis={'title':feat2}, coloraxis={'colorbar':{'title':'Score'}, 
-                                                                                'colorscale':'RdYlGn_r', 'cmin':0, 'cmax':1, 'showscale':True})
+    figure_biv.update_layout(legend={'orientation':"h", 'yanchor':'bottom','y':1.05, 'xanchor':'right','x':1, 
+    'bgcolor':'white', 'font':{'color':'black'}}, xaxis={'title':feat1}, 
+    yaxis={'title':feat2}, coloraxis={'colorbar':{'title':'Score'}, 
+                                        'colorscale':'RdYlGn_r', 'cmin':0, 'cmax':1, 'showscale':True})
     st.plotly_chart(figure_biv, use_container_width=True)
     #### add expander for further explanations on the scatterplot ####
     with st.expander('Informations complémentaires'):
